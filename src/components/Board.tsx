@@ -1,11 +1,8 @@
 function SubBoard() {
 	return (
-		<div className="grid grid-cols-3 gap-2">
+		<div className="grid grid-cols-3 gap-0.5">
 			{Array.from({ length: 9 }).map((_, index) => (
-				<div
-					key={index}
-					className="bg-slate-900 hover:bg-slate-700 p-4 cursor-pointer"
-				></div>
+				<div key={index} className="p-8 cursor-pointer bg-black"></div>
 			))}
 		</div>
 	);
@@ -13,7 +10,7 @@ function SubBoard() {
 
 export default function Board() {
 	return (
-		<div className="grid grid-cols-3 gap-8 border rounded-xl shadow-[0_0_2rem__1rem_white] p-8">
+		<div className="grid grid-cols-3 gap-2 bg-white">
 			{Array.from({ length: 9 }).map((_, index) => (
 				<SubBoard key={index} />
 			))}
