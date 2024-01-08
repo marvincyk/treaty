@@ -28,12 +28,22 @@ function SubBoard({
 	boardState: string[][];
 	onCellClick: (parentIndex: number, childIndex: number) => void;
 }) {
+	const isCellDisabled = (
+		boardState: string[][],
+		parentIndex: number,
+		childIndex: number
+	) => boardState[parentIndex][childIndex] !== "";
+
 	return (
 		<div className="grid grid-cols-3 gap-0.5">
 			{Array.from({ length: 9 }).map((_, index) => (
 				<div
 					key={index}
-					className="p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] hover:bg-slate-800"
+					className={`p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] hover:bg-slate-800 ${
+						isCellDisabled(boardState, parentIndex, index)
+							? "pointer-events-none"
+							: "pointer-events-auto"
+					}`}
 					onClick={() => onCellClick(parentIndex, index)}
 				>
 					{renderCell(boardState, parentIndex, index)}
