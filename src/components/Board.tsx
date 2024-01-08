@@ -1,5 +1,6 @@
 "use client";
 
+import { useToggle } from "@uidotdev/usehooks";
 import { useState } from "react";
 import { FaO, FaX } from "react-icons/fa6";
 
@@ -21,14 +22,20 @@ const renderCell = (
 function SubBoard({
 	parentIndex,
 	boardState,
+	onCellClick,
 }: {
 	parentIndex: number;
 	boardState: string[][];
+	onCellClick: (parentIndex: number, childIndex: number) => void;
 }) {
 	return (
 		<div className="grid grid-cols-3 gap-0.5">
 			{Array.from({ length: 9 }).map((_, index) => (
-				<div key={index} className="p-4 cursor-pointer bg-black min-h-[4rem]">
+				<div
+					key={index}
+					className="p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] hover:bg-slate-800"
+					onClick={() => onCellClick(parentIndex, index)}
+				>
 					{renderCell(boardState, parentIndex, index)}
 				</div>
 			))}
@@ -42,16 +49,35 @@ export default function Board() {
 		["", "", "", "", "", "", "", "", ""],
 		["", "", "", "", "", "", "", "", ""],
 		["", "", "", "", "", "", "", "", ""],
-		["X", "O", "O", "", "X", "", "", "", "X"],
+		["", "", "", "", "", "", "", "", ""],
 		["", "", "", "", "", "", "", "", ""],
 		["", "", "", "", "", "", "", "", ""],
 		["", "", "", "", "", "", "", "", ""],
 		["", "", "", "", "", "", "", "", ""],
 	]);
+	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
+
+	const makeMove = (parentIndex: number, childIndex: number) => {
+		const newBoardState = [...boardState];
+		if (isCurrentPlayerX) {
+			newBoardState[parentIndex][childIndex] = "X";
+			setIsCurrentPlayerX(false);
+		} else {
+			newBoardState[parentIndex][childIndex] = "O";
+			setIsCurrentPlayerX(true);
+		}
+		setBoardState(newBoardState);
+	};
+
 	return (
 		<div className="grid grid-cols-3 gap-2 bg-white">
 			{Array.from({ length: 9 }).map((_, index) => (
-				<SubBoard key={index} parentIndex={index} boardState={boardState} />
+				<SubBoard
+					key={index}
+					parentIndex={index}
+					boardState={boardState}
+					onCellClick={makeMove}
+				/>
 			))}
 		</div>
 	);
