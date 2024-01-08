@@ -54,17 +54,9 @@ function SubBoard({
 }
 
 export default function Board() {
-	const [boardState, setBoardState] = useState([
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-		["", "", "", "", "", "", "", "", ""],
-	]);
+	const [boardState, setBoardState] = useState(
+		Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""))
+	);
 	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
 
 	const makeMove = (parentIndex: number, childIndex: number) => {
