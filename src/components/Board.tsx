@@ -23,16 +23,20 @@ function SubBoard({
 	parentIndex,
 	boardState,
 	onCellClick,
+	latestChildIndex,
 }: {
 	parentIndex: number;
 	boardState: string[][];
 	onCellClick: (parentIndex: number, childIndex: number) => void;
+	latestChildIndex?: number;
 }) {
 	const isCellDisabled = (
 		boardState: string[][],
 		parentIndex: number,
 		childIndex: number
-	) => boardState[parentIndex][childIndex] !== "";
+	) =>
+		boardState[parentIndex][childIndex] !== "" ||
+		(latestChildIndex && parentIndex !== latestChildIndex);
 
 	return (
 		<div className="grid grid-cols-3 gap-0.5">
@@ -58,6 +62,7 @@ export default function Board() {
 		Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""))
 	);
 	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
+	const [latestChildIndex, setLatestChildIndex] = useState<number>();
 
 	const makeMove = (parentIndex: number, childIndex: number) => {
 		const newBoardState = [...boardState];
@@ -69,6 +74,7 @@ export default function Board() {
 			setIsCurrentPlayerX(true);
 		}
 		setBoardState(newBoardState);
+		setLatestChildIndex(childIndex);
 	};
 
 	return (
@@ -79,6 +85,7 @@ export default function Board() {
 					parentIndex={index}
 					boardState={boardState}
 					onCellClick={makeMove}
+					latestChildIndex={latestChildIndex}
 				/>
 			))}
 		</div>
