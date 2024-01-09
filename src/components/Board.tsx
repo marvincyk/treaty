@@ -36,17 +36,17 @@ function SubBoard({
 		childIndex: number
 	) =>
 		boardState[parentIndex][childIndex] !== "" ||
-		(latestChildIndex && parentIndex !== latestChildIndex);
+		(latestChildIndex !== undefined && parentIndex !== latestChildIndex);
 
 	return (
 		<div className="grid grid-cols-3 gap-0.5">
 			{Array.from({ length: 9 }).map((_, index) => (
 				<div
 					key={index}
-					className={`p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] hover:bg-slate-800 ${
+					className={`p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] ${
 						isCellDisabled(boardState, parentIndex, index)
 							? "pointer-events-none"
-							: "pointer-events-auto"
+							: "animate-pulse"
 					}`}
 					onClick={() => onCellClick(parentIndex, index)}
 				>
