@@ -4,12 +4,8 @@ import { useToggle } from "@uidotdev/usehooks";
 import { useState } from "react";
 import { FaO, FaX } from "react-icons/fa6";
 
-const renderCell = (
-	boardState: string[][],
-	parentIndex: number,
-	index: number
-) => {
-	switch (boardState[parentIndex][index]) {
+const renderCell = (board: string[][], parentIndex: number, index: number) => {
+	switch (board[parentIndex][index]) {
 		case "X":
 			return <FaX size="2rem" />;
 		case "O":
@@ -21,21 +17,21 @@ const renderCell = (
 
 function SubBoard({
 	parentIndex,
-	boardState,
+	board,
 	onCellClick,
 	latestChildIndex,
 }: {
 	parentIndex: number;
-	boardState: string[][];
+	board: string[][];
 	onCellClick: (parentIndex: number, childIndex: number) => void;
 	latestChildIndex?: number;
 }) {
 	const isCellDisabled = (
-		boardState: string[][],
+		board: string[][],
 		parentIndex: number,
 		childIndex: number
 	) =>
-		boardState[parentIndex][childIndex] !== "" ||
+		board[parentIndex][childIndex] !== "" ||
 		(latestChildIndex !== undefined && parentIndex !== latestChildIndex);
 
 	return (
@@ -44,13 +40,13 @@ function SubBoard({
 				<div
 					key={index}
 					className={`p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] ${
-						isCellDisabled(boardState, parentIndex, index)
+						isCellDisabled(board, parentIndex, index)
 							? "pointer-events-none"
 							: "animate-pulse"
 					}`}
 					onClick={() => onCellClick(parentIndex, index)}
 				>
-					{renderCell(boardState, parentIndex, index)}
+					{renderCell(board, parentIndex, index)}
 				</div>
 			))}
 		</div>
@@ -58,22 +54,22 @@ function SubBoard({
 }
 
 export default function Board() {
-	const [boardState, setBoardState] = useState(
+	const [board, setBoardState] = useState(
 		Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""))
 	);
 	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
 	const [latestChildIndex, setLatestChildIndex] = useState<number>();
 
 	const makeMove = (parentIndex: number, childIndex: number) => {
-		const newBoardState = [...boardState];
+		const newBoard = [...board];
 		if (isCurrentPlayerX) {
-			newBoardState[parentIndex][childIndex] = "X";
+			newBoard[parentIndex][childIndex] = "X";
 			setIsCurrentPlayerX(false);
 		} else {
-			newBoardState[parentIndex][childIndex] = "O";
+			newBoard[parentIndex][childIndex] = "O";
 			setIsCurrentPlayerX(true);
 		}
-		setBoardState(newBoardState);
+		setBoardState(newBoard);
 		setLatestChildIndex(childIndex);
 	};
 
@@ -83,7 +79,7 @@ export default function Board() {
 				<SubBoard
 					key={index}
 					parentIndex={index}
-					boardState={boardState}
+					board={board}
 					onCellClick={makeMove}
 					latestChildIndex={latestChildIndex}
 				/>
