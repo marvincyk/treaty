@@ -15,6 +15,34 @@ const renderCell = (board: string[][], parentIndex: number, index: number) => {
 	}
 };
 
+const checkSubBoardWinner = (board: string[][], parentIndex: number) => {
+	const winCombinations = [
+		[0, 1, 2],
+		[3, 4, 5],
+		[6, 7, 8],
+		[0, 3, 6],
+		[1, 4, 7],
+		[2, 5, 8],
+		[0, 4, 8],
+		[2, 4, 6],
+	];
+
+	for (const combination of winCombinations) {
+		const [a, b, c] = combination;
+		const subBoard = board[parentIndex];
+
+		if (
+			subBoard[a] !== "" &&
+			subBoard[a] === subBoard[b] &&
+			subBoard[a] === subBoard[c]
+		) {
+			return subBoard[a];
+		}
+	}
+
+	return null;
+};
+
 function SubBoard({
 	parentIndex,
 	board,
@@ -34,35 +62,7 @@ function SubBoard({
 		board[parentIndex][childIndex] !== "" ||
 		(latestChildIndex !== undefined && parentIndex !== latestChildIndex);
 
-	const checkWinner = (board: string[][], parentIndex: number) => {
-		const winCombinations = [
-			[0, 1, 2],
-			[3, 4, 5],
-			[6, 7, 8],
-			[0, 3, 6],
-			[1, 4, 7],
-			[2, 5, 8],
-			[0, 4, 8],
-			[2, 4, 6],
-		];
-
-		for (const combination of winCombinations) {
-			const [a, b, c] = combination;
-			const subBoard = board[parentIndex];
-
-			if (
-				subBoard[a] !== "" &&
-				subBoard[a] === subBoard[b] &&
-				subBoard[a] === subBoard[c]
-			) {
-				return subBoard[a];
-			}
-		}
-
-		return null;
-	};
-
-	const winner = checkWinner(board, parentIndex);
+	const winner = checkSubBoardWinner(board, parentIndex);
 	if (winner) {
 		switch (winner) {
 			case "X":
@@ -88,7 +88,7 @@ function SubBoard({
 					className={`p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] ${
 						isCellDisabled(board, parentIndex, index)
 							? "pointer-events-none"
-							: "animate-pulse"
+							: "bg-neutral-400"
 					}`}
 					onClick={() => onCellClick(parentIndex, index)}
 				>
@@ -116,7 +116,14 @@ export default function Board() {
 			setIsCurrentPlayerX(true);
 		}
 		setBoardState(newBoard);
-		setLatestChildIndex(childIndex);
+
+		const isNextSubBoardWon = checkSubBoardWinner(newBoard, childIndex);
+		if (isNextSubBoardWon) {
+			// The next sub-board has already been won; unset `latestChildIndex` to allow the next player to move anywhere.
+			setLatestChildIndex(undefined);
+		} else {
+			setLatestChildIndex(childIndex);
+		}
 	};
 
 	return (
