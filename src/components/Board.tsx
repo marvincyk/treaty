@@ -177,6 +177,28 @@ export default function Board() {
 		}
 	};
 
+	const checkWinner = () => {
+		const subBoardWinners = [];
+		for (let i = 0; i < board.length; i++) {
+			const winner = checkSubBoardWinner(board, i);
+			subBoardWinners.push(winner ?? "");
+		}
+
+		for (const combination of WIN_COMBINATIONS) {
+			const [a, b, c] = combination;
+
+			if (
+				subBoardWinners[a] !== "" &&
+				subBoardWinners[a] === subBoardWinners[b] &&
+				subBoardWinners[a] === subBoardWinners[c]
+			) {
+				return subBoardWinners[a];
+			}
+		}
+
+		return null;
+	};
+
 	return (
 		<div className="grid grid-cols-3 gap-2 bg-white">
 			{Array.from({ length: 9 }).map((_, index) => (
