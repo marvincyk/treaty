@@ -2,18 +2,49 @@
 
 import { useToggle } from "@uidotdev/usehooks";
 import { useState } from "react";
+import { IconContext } from "react-icons";
 import { FaO, FaX } from "react-icons/fa6";
 
-const renderCell = (board: string[][], parentIndex: number, index: number) => {
-	switch (board[parentIndex][index]) {
+function Cell({
+	board,
+	parentIndex,
+	childIndex,
+	isCurrentPlayerX,
+	isHovered,
+}: {
+	board: string[][];
+	parentIndex: number;
+	childIndex: number;
+	isCurrentPlayerX: boolean;
+	isHovered: boolean;
+}) {
+	switch (board[parentIndex][childIndex]) {
 		case "X":
 			return <FaX size="2rem" />;
 		case "O":
 			return <FaO size="2rem" />;
 		default:
+			if (isHovered) {
+				if (isCurrentPlayerX) {
+					return (
+						<IconContext.Provider value={{ style: { opacity: 0.5 } }}>
+							<div>
+								<FaX size="2rem" />
+							</div>
+						</IconContext.Provider>
+					);
+				}
+				return (
+					<IconContext.Provider value={{ style: { opacity: 0.5 } }}>
+						<div>
+							<FaO size="2rem" />
+						</div>
+					</IconContext.Provider>
+				);
+			}
 			break;
 	}
-};
+}
 
 const checkSubBoardWinner = (board: string[][], parentIndex: number) => {
 	const winCombinations = [
@@ -47,13 +78,17 @@ function SubBoard({
 	parentIndex,
 	board,
 	onCellClick,
+	isCurrentPlayerX,
 	latestChildIndex,
 }: {
 	parentIndex: number;
 	board: string[][];
 	onCellClick: (parentIndex: number, childIndex: number) => void;
+	isCurrentPlayerX: boolean;
 	latestChildIndex?: number;
 }) {
+	const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+
 	const isCellDisabled = (
 		board: string[][],
 		parentIndex: number,
@@ -61,6 +96,14 @@ function SubBoard({
 	) =>
 		board[parentIndex][childIndex] !== "" ||
 		(latestChildIndex !== undefined && parentIndex !== latestChildIndex);
+
+	const handleCellEnter = (childIndex: number) => {
+		if (!isCellDisabled(board, parentIndex, childIndex)) {
+			setHoveredCell(childIndex);
+		}
+	};
+
+	const handleCellLeave = () => setHoveredCell(null);
 
 	const winner = checkSubBoardWinner(board, parentIndex);
 	if (winner) {
@@ -91,8 +134,16 @@ function SubBoard({
 							: "bg-neutral-400"
 					}`}
 					onClick={() => onCellClick(parentIndex, index)}
+					onMouseEnter={() => handleCellEnter(index)}
+					onMouseLeave={handleCellLeave}
 				>
-					{renderCell(board, parentIndex, index)}
+					<Cell
+						board={board}
+						parentIndex={parentIndex}
+						childIndex={index}
+						isCurrentPlayerX={isCurrentPlayerX}
+						isHovered={index === hoveredCell}
+					/>
 				</div>
 			))}
 		</div>
@@ -134,6 +185,7 @@ export default function Board() {
 					parentIndex={index}
 					board={board}
 					onCellClick={makeMove}
+					isCurrentPlayerX={isCurrentPlayerX}
 					latestChildIndex={latestChildIndex}
 				/>
 			))}
