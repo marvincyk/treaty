@@ -1,9 +1,11 @@
 "use client";
 
 import { useToggle } from "@uidotdev/usehooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconContext } from "react-icons";
 import { FaO, FaX } from "react-icons/fa6";
+
+import Modal from "./Modal";
 
 const WIN_COMBINATIONS = [
 	[0, 1, 2],
@@ -16,6 +18,8 @@ const WIN_COMBINATIONS = [
 	[2, 4, 6],
 ];
 
+// TODO: Handle hover state using `useHover`.
+// See: https://usehooks.com/usehover
 function Cell({
 	board,
 	parentIndex,
@@ -167,6 +171,16 @@ export default function Board() {
 	);
 	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
 	const [latestChildIndex, setLatestChildIndex] = useState<number>();
+	const [isModalOpen, setIsModalOpen] = useToggle(false);
+
+	useEffect(() => {
+		const winner = checkWinner();
+		if (winner) {
+			setIsModalOpen(true);
+		}
+	});
+
+	const onNewGameClick = () => location.reload();
 
 	const makeMove = (parentIndex: number, childIndex: number) => {
 		const newBoard = [...board];
@@ -209,19 +223,27 @@ export default function Board() {
 
 		return null;
 	};
+	const winner = checkWinner();
 
 	return (
-		<div className="grid grid-cols-3 gap-2 bg-white">
-			{Array.from({ length: 9 }).map((_, index) => (
-				<SubBoard
-					key={index}
-					parentIndex={index}
-					board={board}
-					onCellClick={makeMove}
-					isCurrentPlayerX={isCurrentPlayerX}
-					latestChildIndex={latestChildIndex}
-				/>
-			))}
-		</div>
+		<>
+			<div className="grid grid-cols-3 gap-2 bg-white">
+				{Array.from({ length: 9 }).map((_, index) => (
+					<SubBoard
+						key={index}
+						parentIndex={index}
+						board={board}
+						onCellClick={makeMove}
+						isCurrentPlayerX={isCurrentPlayerX}
+						latestChildIndex={latestChildIndex}
+					/>
+				))}
+			</div>
+			{isModalOpen && (
+				<Modal
+					onNewGameClick={onNewGameClick}
+				>{`${winner} wins the game!`}</Modal>
+			)}
+		</>
 	);
 }
