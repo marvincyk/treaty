@@ -143,7 +143,7 @@ function SubBoard({
 			{Array.from({ length: 9 }).map((_, index) => (
 				<div
 					key={index}
-					className={`p-4 cursor-pointer bg-black min-h-[4rem] min-w-[4rem] ${
+					className={`p-4 cursor-pointer bg-black sm:h-16 sm:w-16 ${
 						isCellDisabled(board, parentIndex, index)
 							? "pointer-events-none"
 							: "bg-neutral-400"
