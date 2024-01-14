@@ -14,8 +14,23 @@ const io = new Server(server, {
 	},
 });
 
+const players: { [socketId: string]: string } = {};
+
 io.on("connection", (socket) => {
 	console.log(`[server]: New connection from ${socket.id}`);
+
+	const assignPlayer = () => {
+		if (!players[socket.id]) {
+			players[socket.id] = Object.keys(players).length ? "O" : "X";
+			console.log(`[server]: Assigned ${players[socket.id]} to ${socket.id}`);
+		}
+		io.to(socket.id).emit("assignPlayer", players[socket.id]);
+	};
+	assignPlayer();
+
+	socket.on("makeMove", (parentIndex, childIndex) => {
+		socket.broadcast.emit("makeMove", parentIndex, childIndex);
+	});
 });
 
 server.listen(port, () => {

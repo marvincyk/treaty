@@ -4,6 +4,7 @@ import { useToggle } from "@uidotdev/usehooks";
 import { useEffect, useState } from "react";
 import { IconContext } from "react-icons";
 import { FaO, FaX } from "react-icons/fa6";
+import { Socket } from "socket.io-client";
 
 import Modal from "./Modal";
 
@@ -94,15 +95,23 @@ function SubBoard({
 	board,
 	onCellClick,
 	isCurrentPlayerX,
+	player,
 	latestChildIndex,
 }: {
 	parentIndex: number;
 	board: string[][];
-	onCellClick: (parentIndex: number, childIndex: number) => void;
+	onCellClick: (
+		parentIndex: number,
+		childIndex: number,
+		shouldEmit: boolean
+	) => void;
 	isCurrentPlayerX: boolean;
+	player: string;
 	latestChildIndex?: number;
 }) {
 	const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+
+	const isPlayerTurn = isCurrentPlayerX === (player === "X");
 
 	const isCellDisabled = (
 		board: string[][],
@@ -110,7 +119,8 @@ function SubBoard({
 		childIndex: number
 	) =>
 		board[parentIndex][childIndex] !== "" ||
-		(latestChildIndex !== undefined && parentIndex !== latestChildIndex);
+		(latestChildIndex !== undefined && parentIndex !== latestChildIndex) ||
+		!isPlayerTurn;
 
 	const handleCellEnter = (childIndex: number) => {
 		if (!isCellDisabled(board, parentIndex, childIndex)) {
@@ -148,7 +158,7 @@ function SubBoard({
 							? "pointer-events-none"
 							: "bg-neutral-400"
 					}`}
-					onClick={() => onCellClick(parentIndex, index)}
+					onClick={() => onCellClick(parentIndex, index, true)}
 					onMouseEnter={() => handleCellEnter(index)}
 					onMouseLeave={handleCellLeave}
 				>
@@ -165,7 +175,13 @@ function SubBoard({
 	);
 }
 
-export default function Board() {
+export default function Board({
+	socket,
+	player,
+}: {
+	socket: Socket;
+	player: string;
+}) {
 	const [board, setBoardState] = useState(
 		Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""))
 	);
@@ -174,6 +190,10 @@ export default function Board() {
 	const [isModalOpen, setIsModalOpen] = useToggle(false);
 
 	useEffect(() => {
+		socket.on("makeMove", (parentIndex: number, childIndex: number) => {
+			makeMove(parentIndex, childIndex, false);
+		});
+
 		const winner = checkWinner();
 		if (winner) {
 			setIsModalOpen(true);
@@ -182,7 +202,11 @@ export default function Board() {
 
 	const onNewGameClick = () => location.reload();
 
-	const makeMove = (parentIndex: number, childIndex: number) => {
+	const makeMove = (
+		parentIndex: number,
+		childIndex: number,
+		shouldEmit: boolean
+	) => {
 		const newBoard = [...board];
 		if (isCurrentPlayerX) {
 			newBoard[parentIndex][childIndex] = "X";
@@ -190,6 +214,9 @@ export default function Board() {
 		} else {
 			newBoard[parentIndex][childIndex] = "O";
 			setIsCurrentPlayerX(true);
+		}
+		if (shouldEmit) {
+			socket.emit("makeMove", parentIndex, childIndex);
 		}
 		setBoardState(newBoard);
 
@@ -235,6 +262,7 @@ export default function Board() {
 						board={board}
 						onCellClick={makeMove}
 						isCurrentPlayerX={isCurrentPlayerX}
+						player={player}
 						latestChildIndex={latestChildIndex}
 					/>
 				))}
