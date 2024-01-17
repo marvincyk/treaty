@@ -95,7 +95,7 @@ function SubBoard({
 	board,
 	onCellClick,
 	isCurrentPlayerX,
-	player,
+	playerRole,
 	latestChildIndex,
 }: {
 	parentIndex: number;
@@ -106,12 +106,12 @@ function SubBoard({
 		shouldEmit: boolean
 	) => void;
 	isCurrentPlayerX: boolean;
-	player: string;
+	playerRole: string;
 	latestChildIndex?: number;
 }) {
 	const [hoveredCell, setHoveredCell] = useState<number | null>(null);
 
-	const isPlayerTurn = isCurrentPlayerX === (player === "X");
+	const isPlayerTurn = isCurrentPlayerX === (playerRole === "X");
 
 	const isCellDisabled = (
 		board: string[][],
@@ -177,10 +177,16 @@ function SubBoard({
 
 export default function Board({
 	socket,
-	player,
+	roomId,
+	userId,
+	playerRole,
+	onLeaveClick,
 }: {
 	socket: Socket;
-	player: string;
+	roomId: string;
+	userId: string;
+	playerRole: string;
+	onLeaveClick: () => void;
 }) {
 	const [board, setBoardState] = useState(
 		Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""))
@@ -200,7 +206,7 @@ export default function Board({
 		}
 	});
 
-	const onNewGameClick = () => location.reload();
+	const handleNewGameClick = () => location.reload();
 
 	const makeMove = (
 		parentIndex: number,
@@ -222,7 +228,7 @@ export default function Board({
 
 		const isNextSubBoardWon = checkSubBoardWinner(newBoard, childIndex);
 		if (isNextSubBoardWon) {
-			// The next sub-board has already been won; unset `latestChildIndex` to allow the next player to move anywhere.
+			// The next sub-board has already been won; unset `latestChildIndex` to allow the next playerRole to move anywhere.
 			setLatestChildIndex(undefined);
 		} else {
 			setLatestChildIndex(childIndex);
@@ -254,6 +260,30 @@ export default function Board({
 
 	return (
 		<>
+			<div className="absolute top-4 left-4">
+				<p>
+					<b>sessionId: </b>
+					{localStorage.getItem("sessionId")}
+				</p>
+				<p>
+					<b>roomId: </b>
+					{roomId}
+				</p>
+				<p>
+					<b>userId: </b>
+					{userId}
+				</p>
+				<p>
+					<b>playerRole: </b>
+					{playerRole}
+				</p>
+				<button
+					className="mt-4 bg-white text-black font-bold py-2 px-4 rounded"
+					onClick={onLeaveClick}
+				>
+					Leave
+				</button>
+			</div>
 			<div className="grid grid-cols-3 gap-2 bg-white">
 				{Array.from({ length: 9 }).map((_, index) => (
 					<SubBoard
@@ -262,15 +292,21 @@ export default function Board({
 						board={board}
 						onCellClick={makeMove}
 						isCurrentPlayerX={isCurrentPlayerX}
-						player={player}
+						playerRole={playerRole}
 						latestChildIndex={latestChildIndex}
 					/>
 				))}
 			</div>
 			{isModalOpen && (
-				<Modal
-					onNewGameClick={onNewGameClick}
-				>{`${winner} wins the game!`}</Modal>
+				<Modal>
+					<p>{`${winner} wins the game!`}</p>
+					<button
+						className="mt-4 bg-black text-white font-bold py-2 px-4 rounded"
+						onClick={handleNewGameClick}
+					>
+						New Game
+					</button>
+				</Modal>
 			)}
 		</>
 	);
