@@ -180,17 +180,18 @@ export default function Board({
 	roomId,
 	userId,
 	playerRole,
+	board,
+	onBoardChange,
 	onLeaveClick,
 }: {
 	socket: Socket;
 	roomId: string;
 	userId: string;
 	playerRole: string;
+	board: string[][];
+	onBoardChange: (value: string[][]) => void;
 	onLeaveClick: () => void;
 }) {
-	const [board, setBoardState] = useState(
-		Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""))
-	);
 	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
 	const [latestChildIndex, setLatestChildIndex] = useState<number>();
 	const [isModalOpen, setIsModalOpen] = useToggle(false);
@@ -224,7 +225,7 @@ export default function Board({
 		if (shouldEmit) {
 			socket.emit("makeMove", parentIndex, childIndex);
 		}
-		setBoardState(newBoard);
+		onBoardChange(newBoard);
 
 		const isNextSubBoardWon = checkSubBoardWinner(newBoard, childIndex);
 		if (isNextSubBoardWon) {

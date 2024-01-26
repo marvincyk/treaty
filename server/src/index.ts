@@ -44,6 +44,7 @@ io.use((socket, next) => {
 			socket.data.roomId = session.roomId;
 			socket.data.userId = session.userId;
 			socket.data.playerRole = session.playerRole;
+			socket.data.board = session.board;
 			return next();
 		}
 	}
@@ -51,10 +52,14 @@ io.use((socket, next) => {
 	socket.data.roomId = roomId ?? humanId();
 	socket.data.userId = humanId();
 	socket.data.playerRole = assignPlayerRole(socket.data.roomId);
+	socket.data.board = Array.from({ length: 9 }, () =>
+		Array.from({ length: 9 }, () => "")
+	);
 	sessionStore.saveSession(socket.data.sessionId, {
 		roomId: socket.data.roomId,
 		userId: socket.data.userId,
 		playerRole: socket.data.playerRole,
+		board: socket.data.board,
 	});
 	console.log(
 		`[server]: Session saved with sessionId ${socket.data.sessionId} and roomId ${socket.data.roomId}`
@@ -72,6 +77,7 @@ io.on("connection", (socket) => {
 		roomId: socket.data.roomId,
 		userId: socket.data.userId,
 		playerRole: socket.data.playerRole,
+		board: socket.data.board,
 	});
 
 	socket.on("makeMove", (parentIndex, childIndex) => {

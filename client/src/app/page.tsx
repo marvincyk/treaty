@@ -20,6 +20,7 @@ export default function App() {
 	const [roomId, setRoomId] = useState<string>();
 	const [userId, setUserId] = useState<string>();
 	const [playerRole, setPlayerRole] = useState<string>();
+	const [board, setBoard] = useState<string[][]>();
 
 	useEffect(() => {
 		if (!!localStorage.getItem("sessionId")) {
@@ -43,17 +44,20 @@ export default function App() {
 					roomId,
 					userId,
 					playerRole,
+					board,
 				}: {
 					sessionId: string;
 					roomId: string;
 					userId: string;
 					playerRole: "X" | "O";
+					board: string[][];
 				}) => {
 					socket.current.auth = { sessionId };
 					localStorage.setItem("sessionId", sessionId);
 					setRoomId(roomId);
 					setUserId(userId);
 					setPlayerRole(playerRole);
+					setBoard(board);
 				}
 			);
 		}
@@ -74,6 +78,10 @@ export default function App() {
 		setIsGameStarted(true);
 	};
 
+	const handleBoardChange = (value: string[][]) => {
+		setBoard(value);
+	};
+
 	const handleLeaveClick = () => {
 		localStorage.removeItem("sessionId");
 		socket.current.auth = {};
@@ -87,12 +95,14 @@ export default function App() {
 	return (
 		<div className="flex h-screen items-center justify-around">
 			{isGameStarted ? (
-				socket.current && roomId && userId && playerRole ? (
+				socket.current && roomId && userId && playerRole && board ? (
 					<Board
 						socket={socket.current}
 						roomId={roomId}
 						userId={userId}
 						playerRole={playerRole}
+						board={board}
+						onBoardChange={handleBoardChange}
 						onLeaveClick={handleLeaveClick}
 					/>
 				) : (
