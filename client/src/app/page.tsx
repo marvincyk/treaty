@@ -21,6 +21,8 @@ export default function App() {
 	const [userId, setUserId] = useState<string>();
 	const [playerRole, setPlayerRole] = useState<string>();
 	const [board, setBoard] = useState<string[][]>();
+	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
+	const [latestChildIndex, setLatestChildIndex] = useState<number>();
 
 	useEffect(() => {
 		if (!!localStorage.getItem("sessionId")) {
@@ -45,12 +47,16 @@ export default function App() {
 					userId,
 					playerRole,
 					board,
+					currentPlayer,
+					latestChildIndex,
 				}: {
 					sessionId: string;
 					roomId: string;
 					userId: string;
 					playerRole: "X" | "O";
 					board: string[][];
+					currentPlayer: "X" | "O";
+					latestChildIndex: number;
 				}) => {
 					socket.current.auth = { sessionId };
 					localStorage.setItem("sessionId", sessionId);
@@ -58,14 +64,38 @@ export default function App() {
 					setUserId(userId);
 					setPlayerRole(playerRole);
 					setBoard(board);
+					setIsCurrentPlayerX(currentPlayer === "X");
+					setLatestChildIndex(latestChildIndex);
 				}
 			);
 		}
-	}, [isGameStarted, socket, roomId, setIsGameStarted]);
+	}, [isGameStarted, socket, roomId, setIsGameStarted, setIsCurrentPlayerX]);
+
+	// FIXME: Do not emit on first render
+	useEffect(() => {
+		socket.current.emit("boardChange", board);
+	}, [board]);
+
+	// FIXME: Do not emit on first render
+	useEffect(() => {
+		socket.current.emit("currentPlayerChange");
+	}, [isCurrentPlayerX]);
+
+	// FIXME: Do not emit on first render
+	useEffect(() => {
+		socket.current.emit("latestChildIndexChange", latestChildIndex);
+	}, [latestChildIndex]);
 
 	const onStartClick = () => setIsGameStarted(true);
 
 	const onJoinClick = () => setIsJoiningGame(true);
+
+	const onBoardChange = (board: string[][]) => setBoard(board);
+
+	const onCurrentPlayerChange = () => setIsCurrentPlayerX(!isCurrentPlayerX);
+
+	const onLatestChildIndexChange = (latestChildIndex?: number) =>
+		setLatestChildIndex(latestChildIndex);
 
 	const handleJoinGameModalClose = () => setIsJoiningGame(false);
 
@@ -78,16 +108,15 @@ export default function App() {
 		setIsGameStarted(true);
 	};
 
-	const handleBoardChange = (value: string[][]) => {
-		setBoard(value);
-	};
-
 	const handleLeaveClick = () => {
 		localStorage.removeItem("sessionId");
 		socket.current.auth = {};
 		setRoomId(undefined);
 		setUserId(undefined);
 		setPlayerRole(undefined);
+		setBoard(undefined);
+		setIsCurrentPlayerX(undefined);
+		setLatestChildIndex(undefined);
 		setIsGameStarted(false);
 		socket.current.disconnect();
 	};
@@ -102,7 +131,11 @@ export default function App() {
 						userId={userId}
 						playerRole={playerRole}
 						board={board}
-						onBoardChange={handleBoardChange}
+						isCurrentPlayerX={isCurrentPlayerX}
+						latestChildIndex={latestChildIndex}
+						onCurrentPlayerChange={onCurrentPlayerChange}
+						onLatestChildIndexChange={onLatestChildIndexChange}
+						onBoardChange={onBoardChange}
 						onLeaveClick={handleLeaveClick}
 					/>
 				) : (

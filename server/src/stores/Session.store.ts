@@ -4,7 +4,6 @@ export interface Session {
 	roomId: string;
 	userId: string;
 	playerRole: "X" | "O";
-	board: string[][];
 }
 
 export class SessionStore {

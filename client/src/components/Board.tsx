@@ -181,6 +181,10 @@ export default function Board({
 	userId,
 	playerRole,
 	board,
+	isCurrentPlayerX,
+	latestChildIndex,
+	onCurrentPlayerChange,
+	onLatestChildIndexChange,
 	onBoardChange,
 	onLeaveClick,
 }: {
@@ -189,11 +193,13 @@ export default function Board({
 	userId: string;
 	playerRole: string;
 	board: string[][];
-	onBoardChange: (value: string[][]) => void;
+	isCurrentPlayerX: boolean;
+	latestChildIndex?: number;
+	onCurrentPlayerChange: () => void;
+	onLatestChildIndexChange: (latestChildIndex?: number) => void;
+	onBoardChange: (board: string[][]) => void;
 	onLeaveClick: () => void;
 }) {
-	const [isCurrentPlayerX, setIsCurrentPlayerX] = useToggle(true);
-	const [latestChildIndex, setLatestChildIndex] = useState<number>();
 	const [isModalOpen, setIsModalOpen] = useToggle(false);
 
 	useEffect(() => {
@@ -209,6 +215,13 @@ export default function Board({
 
 	const handleNewGameClick = () => location.reload();
 
+	const handleBoardChange = (board: string[][]) => onBoardChange(board);
+
+	const handleCurrentPlayerChange = () => onCurrentPlayerChange();
+
+	const handleLatestChildIndexChange = (latestChildIndex?: number) =>
+		onLatestChildIndexChange(latestChildIndex);
+
 	const makeMove = (
 		parentIndex: number,
 		childIndex: number,
@@ -217,23 +230,23 @@ export default function Board({
 		const newBoard = [...board];
 		if (isCurrentPlayerX) {
 			newBoard[parentIndex][childIndex] = "X";
-			setIsCurrentPlayerX(false);
 		} else {
 			newBoard[parentIndex][childIndex] = "O";
-			setIsCurrentPlayerX(true);
 		}
+		handleCurrentPlayerChange();
 		if (shouldEmit) {
 			socket.emit("makeMove", parentIndex, childIndex);
 		}
-		onBoardChange(newBoard);
 
 		const isNextSubBoardWon = checkSubBoardWinner(newBoard, childIndex);
 		if (isNextSubBoardWon) {
 			// The next sub-board has already been won; unset `latestChildIndex` to allow the next playerRole to move anywhere.
-			setLatestChildIndex(undefined);
+			handleLatestChildIndexChange(undefined);
 		} else {
-			setLatestChildIndex(childIndex);
+			handleLatestChildIndexChange(childIndex);
 		}
+
+		handleBoardChange(newBoard);
 	};
 
 	const checkWinner = () => {

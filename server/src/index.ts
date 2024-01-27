@@ -4,6 +4,7 @@ import { createServer } from "http";
 import humanId from "human-id";
 import { Server } from "socket.io";
 
+import { BoardStore } from "./stores/Board.store";
 import { Session, SessionStore } from "./stores/Session.store";
 
 dotenv.config();
@@ -18,6 +19,7 @@ const io = new Server(server, {
 });
 
 const sessionStore = new SessionStore();
+const boardStore = new BoardStore();
 
 const assignPlayerRole = (roomId: Session["roomId"]) => {
 	const sessions = sessionStore.findAllSessions({
@@ -44,7 +46,11 @@ io.use((socket, next) => {
 			socket.data.roomId = session.roomId;
 			socket.data.userId = session.userId;
 			socket.data.playerRole = session.playerRole;
-			socket.data.board = session.board;
+
+			const board = boardStore.findBoard(session.roomId);
+			socket.data.board = board?.board;
+			socket.data.currentPlayer = board?.currentPlayer;
+			socket.data.latestChildIndex = board?.latestChildIndex;
 			return next();
 		}
 	}
@@ -55,21 +61,26 @@ io.use((socket, next) => {
 	socket.data.board = Array.from({ length: 9 }, () =>
 		Array.from({ length: 9 }, () => "")
 	);
+	socket.data.currentPlayer = "X";
 	sessionStore.saveSession(socket.data.sessionId, {
 		roomId: socket.data.roomId,
 		userId: socket.data.userId,
 		playerRole: socket.data.playerRole,
-		board: socket.data.board,
 	});
 	console.log(
 		`[server]: Session saved with sessionId ${socket.data.sessionId} and roomId ${socket.data.roomId}`
 	);
+	boardStore.saveBoard(socket.data.roomId, {
+		board: socket.data.board,
+		currentPlayer: socket.data.currentPlayer,
+		latestChildIndex: socket.data.latestChildIndex,
+	});
 	next();
 });
 
 io.on("connection", (socket) => {
 	console.log(
-		`[server]: New connection from user with userId ${socket.data.userId}`
+		`[connection]: New connection from user with userId ${socket.data.userId}`
 	);
 
 	socket.emit("session", {
@@ -78,10 +89,49 @@ io.on("connection", (socket) => {
 		userId: socket.data.userId,
 		playerRole: socket.data.playerRole,
 		board: socket.data.board,
+		currentPlayer: socket.data.currentPlayer,
+		latestChildIndex: socket.data.latestChildIndex,
 	});
 
 	socket.on("makeMove", (parentIndex, childIndex) => {
 		socket.broadcast.emit("makeMove", parentIndex, childIndex);
+	});
+
+	socket.on("boardChange", (board) => {
+		socket.data.board = board;
+		boardStore.saveBoard(socket.data.roomId, {
+			board: socket.data.board,
+			currentPlayer: socket.data.currentPlayer,
+			latestChildIndex: socket.data.latestChildIndex,
+		});
+	});
+
+	socket.on("currentPlayerChange", () => {
+		if (socket.data.currentPlayer === "X") {
+			socket.data.currentPlayer = "O";
+		} else {
+			socket.data.currentPlayer = "X";
+		}
+		console.log(
+			`[currentPlayerChange] socket.data.currentPlayer = ${socket.data.currentPlayer}`
+		);
+		boardStore.saveBoard(socket.data.roomId, {
+			board: socket.data.board,
+			currentPlayer: socket.data.currentPlayer,
+			latestChildIndex: socket.data.latestChildIndex,
+		});
+	});
+
+	socket.on("latestChildIndexChange", (latestChildIndex) => {
+		socket.data.latestChildIndex = latestChildIndex;
+		console.log(
+			`[latestChildIndexChange] socket.data.latestChildIndex = ${latestChildIndex}`
+		);
+		boardStore.saveBoard(socket.data.roomId, {
+			board: socket.data.board,
+			currentPlayer: socket.data.currentPlayer,
+			latestChildIndex: socket.data.latestChildIndex,
+		});
 	});
 
 	socket.on("disconnect", async () => {
@@ -90,7 +140,7 @@ io.on("connection", (socket) => {
 		if (isDisconnected) {
 			socket.broadcast.emit("userDisconnected", socket.data.userId);
 			console.log(
-				`[server]: User with userId ${socket.data.userId} has disconnected`
+				`[disconnect]: User with userId ${socket.data.userId} has disconnected`
 			);
 		}
 	});
